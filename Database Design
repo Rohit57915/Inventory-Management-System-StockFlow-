@@ -1,0 +1,54 @@
+CREATE TABLE Companies (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL
+);
+
+CREATE TABLE Warehouses (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255),
+    location TEXT,
+    company_id INT REFERENCES Companies(id)
+);
+
+CREATE TABLE Products (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255),
+    sku VARCHAR(100) UNIQUE NOT NULL,
+    price DECIMAL(10,2),
+    is_bundle BOOLEAN DEFAULT FALSE
+);
+
+CREATE TABLE ProductComponents (
+    bundle_id INT REFERENCES Products(id),
+    component_id INT REFERENCES Products(id),
+    quantity INT,
+    PRIMARY KEY (bundle_id, component_id)
+);
+
+CREATE TABLE Inventory (
+    id SERIAL PRIMARY KEY,
+    product_id INT REFERENCES Products(id),
+    warehouse_id INT REFERENCES Warehouses(id),
+    quantity INT,
+    updated_at TIMESTAMP DEFAULT now()
+);
+
+CREATE TABLE InventoryLogs (
+    id SERIAL PRIMARY KEY,
+    inventory_id INT REFERENCES Inventory(id),
+    change INT,
+    reason VARCHAR(255),
+    created_at TIMESTAMP DEFAULT now()
+);
+
+CREATE TABLE Suppliers (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255),
+    contact_email VARCHAR(255)
+);
+
+CREATE TABLE ProductSuppliers (
+    product_id INT REFERENCES Products(id),
+    supplier_id INT REFERENCES Suppliers(id),
+    PRIMARY KEY (product_id, supplier_id)
+);
