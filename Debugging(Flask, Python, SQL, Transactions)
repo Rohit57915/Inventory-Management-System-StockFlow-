@@ -1,0 +1,39 @@
+@app.route('/api/products', methods=['POST'])
+def create_product():
+    data = request.get_json()
+
+    try:
+        name = data.get('name')
+        sku = data.get('sku')
+        price = Decimal(data.get('price', 0))  # use Decimal
+        initial_quantity = data.get('initial_quantity', 0)
+        warehouse_id = data.get('warehouse_id')
+
+        if not all([name, sku, warehouse_id]):
+            return {"error": "Missing required fields"}, 400
+
+        # Check SKU uniqueness
+        if Product.query.filter_by(sku=sku).first():
+            return {"error": "SKU already exists"}, 400
+
+        product = Product(
+            name=name,
+            sku=sku,
+            price=price
+        )
+        db.session.add(product)
+        db.session.flush()  # get product.id before committing
+
+        inventory = Inventory(
+            product_id=product.id,
+            warehouse_id=warehouse_id,
+            quantity=initial_quantity
+        )
+        db.session.add(inventory)
+        db.session.commit()
+
+        return {"message": "Product created", "product_id": product.id}, 201
+
+    except Exception as e:
+        db.session.rollback()
+        return {"error": str(e)}, 500
